@@ -1,35 +1,131 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
 @import './base.css';
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+#app { min-height: 100vh; }
+
+.site-shell {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  color: #212529;
+  background: #fff;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+.hero { position: relative; padding: 10px; background: #e9ecef; transition: background-color 180ms ease; }
+.hero-row { min-height: 158px; }
+.hero-image { display: block; object-fit: cover; margin: 0 auto; }
+
+.theme-toggle {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  right: 16px;
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #212529;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(33, 37, 41, 0.2);
+  border-radius: 50%;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+.theme-toggle:hover { background: #fff; transform: translateY(-1px); }
+.theme-toggle:focus-visible { outline: 3px solid rgba(0, 123, 255, 0.45); outline-offset: 3px; }
+.theme-toggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+.hero-title-column h2 {
+  margin: 4px 0 10px;
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
+.hero-title-column h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
 
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+.hero-description { font-size: 1rem; line-height: 1.5; }
+.main-navigation { min-height: 56px; padding: 0.5rem 1rem; }
+.main-navigation .container-fluid { padding: 0; }
+
+.main-navigation .navbar-brand,
+.main-navigation .nav-link,
+.site-footer .nav-link { color: #007bff; }
+
+.main-navigation .navbar-brand:hover,
+.main-navigation .navbar-brand:focus,
+.main-navigation .nav-link:hover,
+.main-navigation .nav-link:focus,
+.site-footer .nav-link:hover,
+.site-footer .nav-link:focus { color: #0056b3; }
+
+.main-navigation .navbar-brand { font-size: 1.25rem; }
+.main-navigation .nav-link,
+.site-footer .nav-link { padding-right: 0.5rem; padding-left: 0.5rem; }
+
+.news-section {
+  flex: 1 0 auto;
+  min-height: 400px;
+  padding-top: 4px;
+}
+
+.news-section h2 {
+  margin: 0 0 0.5rem;
+  font-size: 2.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.news-section p { margin: 0 0 1rem; font-size: 1rem; line-height: 1.5; }
+
+.site-footer {
+  flex: 0 0 auto;
+  min-height: 116px;
+  margin-top: 1.5rem;
+  padding: 1rem 0.5rem;
+  font-size: 1rem;
+}
+
+.footer-navigation { justify-content: flex-end; }
+
+.site-shell.dark-theme { color: #f1f3f5; background: #17191c; }
+.dark-theme .hero { background: #25292d; }
+.dark-theme .theme-toggle { color: #ffd76a; background: rgba(20, 22, 25, 0.72); border-color: rgba(255, 255, 255, 0.25); }
+.dark-theme .theme-toggle:hover { background: #111315; }
+.dark-theme .news-section { background: #17191c; }
+.dark-theme .site-footer { color: #f1f3f5; border-color: #3b4046 !important; }
+
+@media (max-width: 767.98px) {
+  .hero { padding: 12px 6px 16px; }
+  .theme-toggle { top: 8px; right: 8px; width: 38px; height: 38px; }
+  .hero-row { min-height: auto; align-items: center !important; }
+  .hero-image { width: 72px; height: 72px; }
+  .hero-title-column h2 { margin-top: 0; font-size: 1.25rem; }
+  .hero-title-column h1 { font-size: 1.55rem; }
+  .hero-description { margin-top: 16px; font-size: 0.95rem; }
+  .news-section { padding-top: 1rem; }
+  .news-section h2 { font-size: 2rem; }
+  .site-footer { justify-content: center !important; gap: 8px; text-align: center; }
+  .footer-navigation { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 479.98px) {
+  .hero-image { width: 58px; height: 58px; }
+  .hero-title-column h2 { font-size: 1rem; }
+  .hero-title-column h1 { font-size: 1.25rem; }
+  .main-navigation { padding-right: 0.75rem; padding-left: 0.75rem; }
 }
