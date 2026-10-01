@@ -1,7 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import AccessibilityToolbar from '@/components/AccessibilityToolbar.vue'
-import MainNavigation from '@/components/MainNavigation.vue'
 import NewsSection from '@/components/NewsSection.vue'
 import SiteFooter from '@/components/SiteFooter.vue'
 import SiteHeader from '@/components/SiteHeader.vue'
@@ -41,7 +40,6 @@ onMounted(() => {
       @toggle-theme="toggleTheme"
     />
     <SiteHeader />
-    <MainNavigation />
     <NewsSection />
     <SiteFooter />
   </div>
