@@ -1,22 +1,32 @@
 import { test, expect } from '@playwright/test'
 
-// See here how to get started:
-// https://playwright.dev/docs/intro
-test('visits the app root url', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'light' })
+test.beforeEach(async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('h1')).toHaveText('Conjunto Residencial Butantã')
-  await expect(page.getByRole('heading', { name: 'Novidades' })).toBeVisible()
-  await expect(page.getByRole('navigation', { name: 'Navegação principal' })).toBeVisible()
-  await expect(
-    page.getByRole('link', { name: /Centro Comunitário do Butantã no Instagram/ }),
-  ).toHaveAttribute('href', 'https://www.instagram.com/centro_comunitario_butanta/')
+  await page.evaluate(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+  await page.reload()
+})
 
-  await page.getByRole('button', { name: 'Aumentar tamanho do texto' }).click()
-  await expect(page.locator('html')).toHaveAttribute('data-font-size', 'large')
+test('enters the prototype and reviews a pending resident', async ({ page }) => {
+  await expect(page.getByRole('heading', { name: 'Boas-vindas' })).toBeVisible()
+  await page.getByRole('button', { name: 'Entrar no painel' }).click()
+  await expect(page.getByRole('heading', { name: 'Visão geral' })).toBeVisible()
+  await expect(page.getByText('Aguardando aprovação').first()).toBeVisible()
+  await page.getByRole('link', { name: 'Revisar comprovantes' }).click()
+  await expect(page.getByRole('heading', { name: 'Moradores' })).toBeVisible()
+  await page.getByText('Bia Oliveira').click()
+  await expect(page.getByText('Comprovante aguardando análise')).toBeVisible()
+  await page.getByRole('button', { name: 'Aprovar cadastro' }).click()
+  await expect(page.getByText('Cadastro e comprovante aprovados. Morador ativado.')).toBeVisible()
+})
 
-  const themeToggle = page.getByRole('button', { name: 'Ativar modo escuro' })
-  await themeToggle.click()
-  await expect(page.locator('.site-shell')).toHaveClass(/dark-theme/)
-  await expect(page.getByRole('button', { name: 'Ativar modo claro' })).toBeVisible()
+test('propagates a payment to residents in the same unit', async ({ page }) => {
+  await page.getByRole('button', { name: 'Entrar no painel' }).click()
+  await page.getByText('Ana Paula Ribeiro').click()
+  await page.getByRole('button', { name: 'Registrar pagamento' }).click()
+  await expect(page.getByText('Pagamento registrado para toda a unidade.')).toBeVisible()
+  await expect(page.getByText('Pagamento em dia')).toBeVisible()
+  await expect(page.getByRole('link', { name: /Marcos Vinícius Ribeiro/ }).getByText('Ativado')).toBeVisible()
 })
