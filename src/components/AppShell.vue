@@ -48,6 +48,10 @@ function logout() {
     <main class="app-main">
       <header class="app-topbar">
         <div>
+          <nav v-if="route.name === 'resident-new'" class="breadcrumbs" aria-label="Caminho de navegação">
+            <RouterLink to="/app/moradores"><AppIcon name="arrow-left" :size="14" />Moradores</RouterLink>
+            <span aria-hidden="true">/</span><span aria-current="page">Cadastrar morador</span>
+          </nav>
           <span class="topbar-eyebrow">PAINEL ADMINISTRATIVO</span>
           <h1>{{ pageTitle }}</h1>
         </div>

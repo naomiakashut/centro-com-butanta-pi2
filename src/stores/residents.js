@@ -184,11 +184,11 @@ export const useResidentsStore = defineStore('residents', () => {
       createdAt: new Intl.DateTimeFormat('pt-BR').format(new Date()),
       lastPayment: '—',
       dueDate: 'Após ativação',
-      document: {
+      document: payload.documentName ? {
         status: 'pending',
         file: payload.documentName || 'comprovante-residencia.pdf',
         submittedAt: new Intl.DateTimeFormat('pt-BR').format(new Date()),
-      },
+      } : null,
     }
     delete created.documentName
     residents.value.push(created)
@@ -200,15 +200,17 @@ export const useResidentsStore = defineStore('residents', () => {
     const resident = getById(id)
     if (!resident) return
     resident.status = 'active'
-    resident.document.status = 'approved'
-    resident.document.rejectionReason = ''
+    if (resident.document) {
+      resident.document.status = 'approved'
+      resident.document.rejectionReason = ''
+    }
     resident.dueDate = '10/10/2026'
     persist()
   }
 
   function rejectDocument(id, reason) {
     const resident = getById(id)
-    if (!resident) return
+    if (!resident?.document) return
     resident.status = 'pending'
     resident.document.status = 'rejected'
     resident.document.rejectionReason = reason

@@ -22,7 +22,7 @@ function flash(message) {
 
 function approve() {
   store.approveResident(resident.value.id)
-  flash('Cadastro e comprovante aprovados. Morador ativado.')
+  flash(resident.value.document ? 'Cadastro e comprovante aprovados. Morador ativado.' : 'Cadastro aprovado. Morador ativado.')
 }
 
 function reject() {
@@ -52,9 +52,9 @@ function updatePayment(isOverdue) {
       <div class="detail-hero__actions"><button v-if="resident.status !== 'inactive'" class="button button--danger-ghost" type="button" @click="confirmDeactivate = true">Desativar cadastro</button></div>
     </section>
 
-    <section v-if="resident.document.status === 'pending' || resident.document.status === 'rejected'" class="review-banner">
-      <div><AppIcon name="clock" /><span><strong>Comprovante aguardando análise</strong><small>Revise o documento antes de ativar o cadastro.</small></span></div>
-      <div><button class="button button--danger-ghost" type="button" @click="rejectOpen = true">Reprovar</button><button class="button button--primary" type="button" @click="approve"><AppIcon name="check" :size="17" />Aprovar cadastro</button></div>
+    <section v-if="resident.status === 'pending'" class="review-banner">
+      <div><AppIcon name="clock" /><span><strong>{{ resident.document ? 'Comprovante aguardando análise' : 'Cadastro aguardando análise' }}</strong><small>Revise os dados antes de ativar o cadastro.</small></span></div>
+      <div><button v-if="resident.document" class="button button--danger-ghost" type="button" @click="rejectOpen = true">Reprovar</button><button class="button button--primary" type="button" @click="approve"><AppIcon name="check" :size="17" />Aprovar cadastro</button></div>
     </section>
 
     <div class="detail-grid">
@@ -64,11 +64,7 @@ function updatePayment(isOverdue) {
           <dl class="info-list"><div><dt>Nome completo</dt><dd>{{ resident.name }}</dd></div><div><dt>CPF</dt><dd>{{ resident.cpf }}</dd></div><div><dt>Data de nascimento</dt><dd>{{ new Date(`${resident.birthDate}T12:00:00`).toLocaleDateString('pt-BR') }}</dd></div><div><dt>Telefone</dt><dd>{{ resident.phone }}</dd></div><div><dt>E-mail</dt><dd>{{ resident.email || 'Não informado' }}</dd></div><div><dt>Vínculo com imóvel</dt><dd>{{ resident.owner ? 'Proprietário(a)' : 'Associado(a) / não proprietário(a)' }}</dd></div></dl>
         </section>
 
-        <section class="panel info-panel">
-          <div class="panel-heading"><div><h2>Comprovante de residência</h2><p>Documento enviado para validação do cadastro.</p></div><StatusBadge :status="resident.document.status" /></div>
-          <div v-if="resident.document.status === 'rejected'" class="rejection-box"><strong>Motivo da reprovação</strong><p>{{ resident.document.rejectionReason }}</p></div>
-          <div class="document-row"><span class="document-icon"><AppIcon name="file" /></span><div><strong>{{ resident.document.file }}</strong><small>Enviado em {{ resident.document.submittedAt }}</small></div><button class="button button--secondary button--small" type="button" @click="flash('Download simulado para esta apresentação.')"><AppIcon name="download" :size="16" />Baixar</button></div>
-        </section>
+        <div v-if="resident.document?.status === 'rejected'" class="rejection-box"><strong>Motivo da reprovação</strong><p>{{ resident.document.rejectionReason }}</p></div>
 
         <section class="panel info-panel">
           <div class="panel-heading"><div><h2>Moradores da mesma unidade</h2><p>A situação financeira é compartilhada por toda a residência.</p></div></div>
