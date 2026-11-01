@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:fe": "vite --mode standalone",
     "build": "vite build",
     "preview": "vite preview",
     "test:unit": "vitest",

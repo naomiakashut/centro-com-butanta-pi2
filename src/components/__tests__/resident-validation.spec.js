@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { maskCpf, maskDate, maskPhone, maskCep, formatCity, dateToIso, personalErrors, residentialErrors, isEmail } from '@/utils/residentValidation'
 
-const validPerson = { name: 'Maria #2 — Souza', socialName: '', cpf: 'ABC.123.DEF-45', birthDate: '29/02/2000', phone: '(11)1234-5678', email: 'a@b' }
+const validPerson = { name: 'Maria #2 — Souza', socialName: '', cpf: 'ABC.123.DEF-45', birthDate: '29/02/2000', phone: '(11)1234-5678', email: 'a@b.com' }
 const validAddress = { cep: '05508-000', street: 'Av. João, nº 123 / fundos', city: "São João d’Aliança" }
 
 describe('máscaras e validações do cadastro', () => {
@@ -35,8 +35,8 @@ describe('máscaras e validações do cadastro', () => {
     expect(dateToIso('31/12/1990')).toBe('1990-12-31')
   })
 
-  it.each(['a@b', 'nome.sobrenome+tag@dominio.com.br', '1@2'])('aceita email simples %s', (value) => expect(isEmail(value)).toBe(true))
-  it.each(['@dominio', 'nome@', 'nome dominio@a', 'nome@@dominio', '!@b', 'a@!'])('rejeita email inválido %s', (value) => expect(isEmail(value)).toBe(false))
+  it.each(['a@b.com', 'nome.sobrenome+tag@dominio.com.br'])('aceita email simples %s', (value) => expect(isEmail(value)).toBe(true))
+  it.each(['a@b', '1@2', '@dominio', 'nome@', 'nome dominio@a', 'nome@@dominio', '!@b', 'a@!'])('rejeita email inválido %s', (value) => expect(isEmail(value)).toBe(false))
 
   it('aceita nomes com números, acentos e símbolos e nomes opcionais vazios', () => {
     expect(Object.values(personalErrors(validPerson)).some(Boolean)).toBe(false)

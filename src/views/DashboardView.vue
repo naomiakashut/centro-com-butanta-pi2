@@ -11,7 +11,7 @@ const ufespDraft = ref(store.ufespValue)
 const settingsOpen = ref(false)
 const statusOrder = { overdue: 0, pending: 1, active: 2, inactive: 3 }
 const recentResidents = computed(() => [...store.residents].sort((a, b) => statusOrder[a.status] - statusOrder[b.status] || a.name.localeCompare(b.name)).slice(0, 6))
-const overdueUnits = computed(() => new Set(store.residents.filter((resident) => resident.status === 'overdue').map((resident) => resident.unit)).size)
+const overdueUnits = computed(() => new Set(store.residents.filter((resident) => resident.status === 'overdue').map((resident) => resident.homeId)).size)
 
 function saveUfesp() {
   store.updateUfesp(ufespDraft.value)
@@ -22,20 +22,20 @@ function saveUfesp() {
 <template>
   <div class="page-stack">
     <div class="page-intro page-intro--actions">
-      <div><p>Olá, Marina. Aqui está o resumo da comunidade hoje.</p><span>Atualizado em 30 de setembro de 2026, às 14:30</span></div>
+      <div><p>Olá, equipe. Aqui está o resumo da comunidade hoje.</p><span>Atualizado em {{ store.updatedAt || '—' }}</span></div>
       <RouterLink class="button button--primary" to="/app/cadastro"><AppIcon name="plus" :size="18" />Cadastrar morador</RouterLink>
     </div>
 
     <section class="summary-grid" aria-label="Resumo dos moradores">
-      <article class="summary-card summary-card--blue"><div class="summary-card__icon"><AppIcon name="users" :size="24" /></div><div><span>Moradores ativos</span><strong>{{ store.activeResidents.length }}</strong><small>{{ store.activeCount }} em dia</small></div></article>
-      <article class="summary-card summary-card--amber"><div class="summary-card__icon"><AppIcon name="clock" :size="24" /></div><div><span>Aguardando aprovação</span><strong>{{ store.pendingCount }}</strong><small>comprovantes para revisar</small></div></article>
+      <article class="summary-card summary-card--blue"><div class="summary-card__icon"><AppIcon name="users" :size="24" /></div><div><span>Moradores ativos</span><strong>{{ store.activeResidents.length }}</strong><small>{{ store.activeCount }} ativados</small></div></article>
+      <article class="summary-card summary-card--amber"><div class="summary-card__icon"><AppIcon name="clock" :size="24" /></div><div><span>Aguardando aprovação</span><strong>{{ store.pendingCount }}</strong><small>cadastros para revisar</small></div></article>
       <article class="summary-card summary-card--red"><div class="summary-card__icon"><AppIcon name="alert" :size="24" /></div><div><span>Mensalidades atrasadas</span><strong>{{ store.overdueCount }}</strong><small>em {{ overdueUnits }} unidade residencial</small></div></article>
-      <article class="summary-card summary-card--green"><div class="summary-card__icon"><AppIcon name="home" :size="24" /></div><div><span>Unidades representadas</span><strong>{{ new Set(store.activeResidents.map((r) => r.unit)).size }}</strong><small>residências com cadastro ativo</small></div></article>
+      <article class="summary-card summary-card--green"><div class="summary-card__icon"><AppIcon name="home" :size="24" /></div><div><span>Unidades representadas</span><strong>{{ new Set(store.activeResidents.map((r) => r.homeId)).size }}</strong><small>residências com cadastro ativo</small></div></article>
     </section>
 
     <section v-if="store.overdueCount" class="attention-banner">
       <div class="attention-banner__icon"><AppIcon name="alert" /></div>
-      <div><strong>{{ overdueUnits }} unidade precisa de atenção</strong><p>O atraso é compartilhado por todos os moradores ativos da mesma residência.</p></div>
+      <div><strong>{{ overdueUnits }} unidade precisa de atenção</strong><p>Indicador baseado no último pagamento registrado para a residência; a API não informa vencimentos.</p></div>
       <RouterLink to="/app/moradores?status=overdue">Ver moradores <AppIcon name="chevron" :size="16" /></RouterLink>
     </section>
 
@@ -61,12 +61,12 @@ function saveUfesp() {
         <section class="panel quick-panel">
           <div class="panel-heading"><div><h2>Ações rápidas</h2><p>Atalhos para tarefas frequentes.</p></div></div>
           <RouterLink to="/app/cadastro"><span><AppIcon name="plus" /></span><div><strong>Novo cadastro</strong><small>Adicionar morador ou residência</small></div><AppIcon name="chevron" :size="17" /></RouterLink>
-          <RouterLink to="/app/moradores?status=pending"><span><AppIcon name="file" /></span><div><strong>Revisar comprovantes</strong><small>{{ store.pendingCount }} aguardando análise</small></div><AppIcon name="chevron" :size="17" /></RouterLink>
+          <RouterLink to="/app/moradores?status=pending"><span><AppIcon name="file" /></span><div><strong>Revisar cadastros</strong><small>{{ store.pendingCount }} aguardando análise</small></div><AppIcon name="chevron" :size="17" /></RouterLink>
           <button type="button" @click="settingsOpen = !settingsOpen"><span><AppIcon name="settings" /></span><div><strong>Valor da UFESP</strong><small>R$ {{ store.ufespValue.toFixed(2).replace('.', ',') }}</small></div><AppIcon name="chevron" :size="17" /></button>
           <form v-if="settingsOpen" class="ufesp-form" @submit.prevent="saveUfesp"><label for="ufesp">Valor atual em reais</label><div><input id="ufesp" v-model="ufespDraft" type="number" min="1" step="0.01" /><button class="button button--primary button--small">Salvar</button></div></form>
         </section>
         <section class="privacy-card"><AppIcon name="check" /><div><strong>Dados protegidos</strong><p>CPFs estão mascarados e o acesso é restrito à equipe autorizada.</p></div></section>
-        <button class="reset-demo" type="button" @click="store.resetDemo()">Restaurar dados da demonstração</button>
+        <p>UFESP usada apenas para estimativa nesta sessão. A API não armazena essa configuração.</p>
       </aside>
     </div>
   </div>

@@ -3,6 +3,7 @@ const props = defineProps({ status: { type: String, required: true } })
 
 const labels = {
   pending: 'Cadastrado',
+  unknown: 'Situação não reconhecida',
   active: 'Ativado',
   overdue: 'Mensalidade atrasada',
   inactive: 'Desativado',

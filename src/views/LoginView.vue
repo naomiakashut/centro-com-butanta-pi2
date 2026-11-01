@@ -1,19 +1,28 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { login as authenticate } from '@/services/api'
 
 const router = useRouter()
-const email = ref('admin@centrobutanta.org.br')
-const password = ref('prototipo')
+const standalone = import.meta.env.MODE === 'standalone'
+const email = ref(standalone ? 'demo@example.com' : '')
+const password = ref(standalone ? 'demonstracao' : '')
 const showPassword = ref(false)
 const loading = ref(false)
 
-function login() {
+const error = ref('')
+async function login() {
+  if (loading.value) return
   loading.value = true
-  window.setTimeout(() => {
-    sessionStorage.setItem('ccb-auth', 'true')
-    router.push({ name: 'dashboard' })
-  }, 350)
+  error.value = ''
+  try {
+    await authenticate(email.value.trim(), password.value)
+    await router.push({ name: 'dashboard' })
+  } catch (cause) {
+    error.value = cause.message
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -29,7 +38,7 @@ function login() {
         <h1>Cuidar da comunidade começa com informação organizada.</h1>
         <p>Cadastros, comprovantes e mensalidades reunidos em um só lugar para apoiar o trabalho da equipe.</p>
       </div>
-      <p class="login-caption">Protótipo para validação com a equipe do Centro Comunitário</p>
+      <p class="login-caption">Gestão do Centro Comunitário</p>
     </section>
 
     <section class="login-form-panel">
@@ -39,10 +48,11 @@ function login() {
           <h2>Boas-vindas</h2>
           <p>Acesse o painel administrativo.</p>
         </div>
-        <div class="demo-notice"><strong>Acesso de demonstração</strong><span>Os dados já estão preenchidos. Basta entrar.</span></div>
+        <div v-if="standalone" class="demo-notice"><strong>Demonstração local</strong><span>Use demo@example.com e senha demonstracao. Os dados são fictícios e reiniciam com o servidor.</span></div>
+        <p v-if="error" class="field-error" role="alert">{{ error }}</p>
         <label class="field-label" for="email">E-mail</label>
         <input id="email" v-model="email" class="form-control-app" type="email" autocomplete="username" required />
-        <div class="password-label"><label class="field-label" for="password">Senha</label><button type="button">Esqueci minha senha</button></div>
+        <div class="password-label"><label class="field-label" for="password">Senha</label></div>
         <div class="password-field">
           <input id="password" v-model="password" class="form-control-app" :type="showPassword ? 'text' : 'password'" autocomplete="current-password" required />
           <button type="button" :aria-label="showPassword ? 'Ocultar senha' : 'Exibir senha'" @click="showPassword = !showPassword">{{ showPassword ? 'Ocultar' : 'Exibir' }}</button>

@@ -10,7 +10,7 @@ import { maskCpf, maskDate, maskPhone, maskCep, formatCity, dateToIso, personalE
 const store = useResidentsStore()
 const router = useRouter()
 const submitted = ref(false)
-const form = reactive({ name: '', socialName: '', cpf: '', birthDate: '', email: '', phone: '', cep: '', street: '', number: '', complement: '', city: '', state: '', owner: true, hasAssociates: false })
+const form = reactive({ name: '', socialName: '', cpf: '', birthDate: '', email: '', phone: '', cep: '', street: '', number: '', block: '', ownerName: '', city: '', state: '', owner: true, hasAssociates: false })
 const cepLoading = ref(false)
 const cepMessage = ref('')
 const addressLocked = ref(false)
@@ -18,7 +18,6 @@ const errors = computed(() => ({ ...personalErrors(form), ...residentialErrors(f
 const associateErrors = computed(() => associates.value.map((associate) => personalErrors(associate, false)))
 let cepRequest
 const states = 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ')
-const address = computed(() => `${form.street}, ${form.number}${form.complement ? ` — ${form.complement}` : ''} · ${form.city}/${form.state} · CEP ${form.cep}`)
 watch(() => form.cep, () => {
   cepRequest?.abort()
   addressLocked.value = false
@@ -50,7 +49,7 @@ async function searchCep() {
     form.city = result.cidade
     form.state = result.estado
     addressLocked.value = true
-    cepMessage.value = 'Endereço preenchido pelo CEP. Informe o número e o complemento, se houver.'
+    cepMessage.value = 'Endereço preenchido pelo CEP. Informe o número e o bloco, se houver.'
   } catch (error) {
     if (!request.signal.aborted) cepMessage.value = error.message
   } finally {
@@ -70,33 +69,32 @@ function removeAssociate(index) {
   if (!associates.value.length) form.hasAssociates = false
 }
 
-function submit() {
+const saving = ref(false)
+const saveError = ref('')
+async function submit() {
+  if (saving.value) return
   submitted.value = true
-  if (cepLoading.value || Object.values(errors.value).some(Boolean) || !form.number.trim() || !states.includes(form.state)) return
+  saveError.value = ''
+  if (cepLoading.value || Object.values(errors.value).some(Boolean) || !form.number.trim() || form.number.length > 20 || form.block.length > 50 || (!form.owner && (!form.ownerName.trim() || form.ownerName.length > 200)) || !states.includes(form.state)) return
   if (associateErrors.value.some((error) => Object.values(error).some(Boolean))) return
-  const primary = store.createResident({
-    ...form,
-    birthDate: dateToIso(form.birthDate),
-    unit: address.value,
-    address: address.value,
-    monthlyFee: monthlyFee.value,
-  })
-  associates.value.forEach((associate) => store.createResident({
-    ...associate,
-    birthDate: dateToIso(associate.birthDate),
-    socialName: '',
-    unit: address.value,
-    cep: form.cep, street: form.street, number: form.number, complement: form.complement, city: form.city, state: form.state,
-    address: address.value,
-    owner: false,
-    monthlyFee: 1,
-  }))
-  router.push({ name: 'resident-detail', params: { id: primary.id }, query: { created: 'true' } })
+  saving.value = true
+  try {
+    const id = await store.createResidents(
+      { ...form, birthDate: dateToIso(form.birthDate) },
+      associates.value.map((associate) => ({ ...associate, birthDate: dateToIso(associate.birthDate) })),
+    )
+    await router.push({ name: 'resident-detail', params: { id }, query: { created: 'true' } })
+  } catch (cause) {
+    saveError.value = cause.message
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
 <template>
   <form class="form-page" novalidate @submit.prevent="submit">
+    <div :inert="saving" class="form-fields">
     <section class="panel form-section">
       <div class="form-section__body">
         <div class="form-section__heading"><h2>Dados pessoais</h2><p>Informações de identificação e contato do morador.</p></div>
@@ -113,14 +111,14 @@ function submit() {
 
     <section class="panel form-section">
       <div class="form-section__body">
-        <div class="form-section__heading"><h2>Unidade residencial</h2><p>O status da mensalidade será compartilhado entre moradores desta unidade.</p></div>
+        <div class="form-section__heading"><h2>Unidade residencial</h2><p>Os associados serão vinculados à mesma moradia. CEP, cidade e estado servem apenas para consulta e não são salvos pela API atual.</p></div>
         <div class="form-grid address-fields">
           <ValidatedField v-model="form.cep" label="CEP *" name="cep" autocomplete="postal-code" inputmode="numeric" placeholder="00000-000" :formatter="maskCep" :error="errors.cep" :submitted="submitted" required @blur="searchCep" @keydown.enter.prevent="searchCep" />
           <div class="cep-action"><button class="button button--secondary" type="button" :disabled="cepLoading" @click="searchCep">{{ cepLoading ? 'Consultando…' : 'Consultar CEP' }}</button></div>
           <p v-if="cepMessage" class="cep-message form-field--wide" role="status">{{ cepMessage }}</p>
           <ValidatedField v-model="form.street" class="form-field--wide" label="Endereço *" name="street" autocomplete="address-line1" maxlength="150" :disabled="addressLocked" :error="errors.street" :submitted="submitted" required />
-          <label class="form-field"><span>Número *</span><input v-model="form.number" name="number" :class="{ invalid: submitted && !form.number.trim() }" /></label>
-          <label class="form-field"><span>Complemento</span><input v-model="form.complement" name="complement" autocomplete="address-line2" /></label>
+          <label class="form-field"><span>Número *</span><input v-model="form.number" maxlength="20" name="number" :class="{ invalid: submitted && !form.number.trim() }" /></label>
+          <label class="form-field"><span>Bloco</span><input v-model="form.block" name="block" maxlength="50" /></label>
           <ValidatedField v-model="form.city" label="Cidade *" name="city" autocomplete="address-level2" maxlength="50" :formatter="formatCity" :disabled="addressLocked" :error="errors.city" :submitted="submitted" required />
           <label class="form-field"><span>Estado *</span><select v-model="form.state" name="state" autocomplete="address-level1" :disabled="addressLocked" :class="{ invalid: submitted && !form.state }"><option value="">Selecione</option><option v-for="state in states" :key="state" :value="state">{{ state }}</option></select></label>
         </div>
@@ -142,14 +140,18 @@ function submit() {
       </div>
     </section>
 
+    <ValidatedField v-if="!form.owner" v-model="form.ownerName" label="Nome do proprietário *" maxlength="200" :error="!form.ownerName.trim() ? 'Informe o nome do proprietário.' : ''" :submitted="submitted" required />
+
     <section class="panel form-section">
       <div class="form-section__body">
         <div class="form-section__heading"><h2>Mensalidade</h2><p>O cadastro será analisado pela equipe antes da ativação.</p></div>
-        <div class="fee-summary"><div><span>Mensalidade da unidade</span><strong>{{ monthlyFee }} UFESP</strong></div><div><span>Valor estimado atual</span><strong>R$ {{ monthlyValue.toFixed(2).replace('.', ',') }}</strong></div><small>Calculado com a UFESP configurada em R$ {{ store.ufespValue.toFixed(2).replace('.', ',') }}. O valor pode ser atualizado pela administração.</small></div>
+        <div class="fee-summary"><div><span>Mensalidade da unidade</span><strong>{{ monthlyFee }} UFESP</strong></div><div><span>Valor estimado atual</span><strong>R$ {{ monthlyValue.toFixed(2).replace('.', ',') }}</strong></div><small>Calculado com a UFESP configurada em R$ {{ store.ufespValue.toFixed(2).replace('.', ',') }}. Estimativa local, sem cobrança ou persistência de UFESP na API.</small></div>
       </div>
     </section>
 
-    <p v-if="submitted" class="field-error" role="alert">Verifique se todos os campos obrigatórios (*) foram preenchidos corretamente.</p>
-    <div class="form-actions"><RouterLink class="button button--ghost" to="/app/moradores">Cancelar</RouterLink><button class="button button--primary button--large" type="submit" :disabled="cepLoading">Enviar para aprovação <AppIcon name="chevron" :size="17" /></button></div>
+    <p v-if="submitted && !saveError && Object.values(errors).some(Boolean)" class="field-error" role="alert">Verifique se todos os campos obrigatórios (*) foram preenchidos corretamente.</p>
+    <p v-if="saveError" class="field-error" role="alert">{{ saveError }}</p>
+    <div class="form-actions"><RouterLink class="button button--ghost" to="/app/moradores">Cancelar</RouterLink><button class="button button--primary button--large" type="submit" :disabled="cepLoading || saving">{{ saving ? 'Salvando…' : 'Enviar para aprovação' }} <AppIcon name="chevron" :size="17" /></button></div>
+    </div>
   </form>
 </template>

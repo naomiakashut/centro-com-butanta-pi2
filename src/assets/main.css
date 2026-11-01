@@ -381,3 +381,5 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+.form-fields { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 1.5rem; }

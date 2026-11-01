@@ -1,17 +1,26 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { clearSession } from '@/services/api'
+import { useResidentsStore } from '@/stores/residents'
 import AppIcon from './AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
+const standalone = import.meta.env.MODE === 'standalone'
 const mobileOpen = ref(false)
+const store = useResidentsStore()
+function endSession() {
+  store.clear()
+  router.replace({ name: 'login' })
+}
+onMounted(() => window.addEventListener('ccb-session-ended', endSession))
+onBeforeUnmount(() => window.removeEventListener('ccb-session-ended', endSession))
 
 const pageTitle = computed(() => route.meta.title || 'Visão geral')
 
 function logout() {
-  sessionStorage.removeItem('ccb-auth')
-  router.push({ name: 'login' })
+  clearSession()
 }
 </script>
 
@@ -39,8 +48,8 @@ function logout() {
       </nav>
 
       <div class="sidebar-user">
-        <div class="avatar">MA</div>
-        <div><strong>Marina Alves</strong><span>Administradora</span></div>
+        <div class="avatar">CC</div>
+        <div><strong>Equipe administrativa</strong><span>Administradora</span></div>
         <button type="button" aria-label="Sair" title="Sair" @click="logout"><AppIcon name="logout" :size="18" /></button>
       </div>
     </aside>
@@ -56,11 +65,11 @@ function logout() {
           <h1>{{ pageTitle }}</h1>
         </div>
         <div class="topbar-user">
-          <div><strong>Marina Alves</strong><span>Administradora</span></div>
-          <div class="avatar">MA</div>
+          <div><strong>Equipe administrativa</strong><span>Administradora</span></div>
+          <div class="avatar">CC</div>
         </div>
       </header>
-      <div class="app-content"><slot /></div>
+      <div class="app-content"><p v-if="standalone" class="demo-notice" role="status">Demonstração local · Dados fictícios, mantidos apenas enquanto este servidor estiver em execução.</p><slot /></div>
     </main>
   </div>
 </template>

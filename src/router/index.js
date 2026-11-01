@@ -1,3 +1,4 @@
+import { getToken } from '@/services/api'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -25,7 +26,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const isAuthenticated = sessionStorage.getItem('ccb-auth') === 'true'
+  const isAuthenticated = Boolean(getToken())
   if (!to.meta.public && !isAuthenticated) return { name: 'login' }
   if (to.name === 'login' && isAuthenticated) return { name: 'dashboard' }
 })

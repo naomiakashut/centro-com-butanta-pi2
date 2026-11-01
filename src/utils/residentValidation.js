@@ -29,8 +29,8 @@ export function dateToIso(value) {
   return day <= days[month - 1] ? `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}` : null
 }
 
-// O e-mail é opcional. Não exige ponto no domínio, conforme a regra do formulário.
-export const isEmail = (value) => /^[^\s@]*[a-z0-9][^\s@]*@[^\s@]*[a-z0-9][^\s@]*$/i.test(value)
+// O e-mail é opcional; domínios sem ponto são rejeitados pelo EmailStr da API.
+export const isEmail = (value) => /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/i.test(value)
 
 export function personalErrors(person, phoneRequired = true) {
   return {
@@ -39,7 +39,7 @@ export function personalErrors(person, phoneRequired = true) {
     cpf: !/^[a-z0-9]{3}\.[a-z0-9]{3}\.[a-z0-9]{3}-[a-z0-9]{2}$/i.test(person.cpf) ? 'Informe os 11 caracteres do CPF.' : '',
     birthDate: !dateToIso(person.birthDate) ? 'Informe uma data válida no formato dd/mm/aaaa.' : '',
     phone: (phoneRequired || person.phone) && !/^\(\d{2}\)\d{4,5}-\d{4}$/.test(person.phone) ? 'Informe DDD e telefone com 10 ou 11 dígitos.' : '',
-    email: person.email && !isEmail(person.email) ? 'Informe um e-mail válido, como nome@dominio.' : '',
+    email: person.email && !isEmail(person.email) ? 'Informe um e-mail válido, como nome@dominio.com.' : '',
   }
 }
 

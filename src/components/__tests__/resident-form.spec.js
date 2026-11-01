@@ -6,7 +6,10 @@ import ResidentFormView from '@/views/ResidentFormView.vue'
 import ResidentDetailView from '@/views/ResidentDetailView.vue'
 import AppShell from '@/components/AppShell.vue'
 import { useResidentsStore } from '@/stores/residents'
+import { createHousehold, loadResidents, updateResident } from '@/services/residents'
 import { lookupCep } from '@/services/cep'
+
+vi.mock('@/services/residents', () => ({ createHousehold: vi.fn(), loadResidents: vi.fn(), updateResident: vi.fn(), updateDocument: vi.fn() }))
 
 vi.mock('@/services/cep', () => ({ lookupCep: vi.fn() }))
 
@@ -17,6 +20,9 @@ let pinia
 beforeEach(() => {
   vi.stubGlobal('localStorage', { getItem: () => null, setItem: vi.fn() })
   vi.mocked(lookupCep).mockReset()
+  vi.mocked(createHousehold).mockReset().mockResolvedValue(9)
+  vi.mocked(loadResidents).mockReset().mockResolvedValue([])
+  vi.mocked(updateResident).mockReset().mockResolvedValue({})
   pinia = createPinia()
   router = createRouter({
     history: createMemoryHistory(),
@@ -48,12 +54,12 @@ async function fillForm() {
     'Nome completo *': 'Pessoa de Teste', 'CPF *': '529.982.247-25',
     'Data de nascimento *': '10051990', 'Telefone *': '11999999999',
     'CEP *': '05508-000', 'Endereço *': 'Rua de Teste', 'Número *': '123',
-    'Complemento': 'Fundos', 'Cidade *': 'São Paulo', 'Estado *': 'SP',
+    'Bloco': 'A', 'Cidade *': 'São Paulo', 'Estado *': 'SP',
   })) await field(label).setValue(value)
 }
 
 describe('cadastro e detalhes', () => {
-  it('cadastra sem comprovante, preserva o endereço e abre os detalhes', async () => {
+  it('envia o cadastro à API e abre os detalhes após confirmação', async () => {
     await render()
     expect(wrapper.find('input[type="file"]').exists()).toBe(false)
     expect(wrapper.find('.form-progress').exists()).toBe(false)
@@ -61,21 +67,20 @@ describe('cadastro e detalhes', () => {
     await fillForm()
     await wrapper.find('form').trigger('submit')
     await flushPromises()
-    const store = useResidentsStore(pinia)
-    const created = store.residents.at(-1)
-    expect(created).toMatchObject({ street: 'Rua de Teste', number: '123', complement: 'Fundos', city: 'São Paulo', state: 'SP', cep: '05508-000', cpf: '529.982.247-25', birthDate: '1990-05-10', phone: '(11)99999-9999', document: null })
-    expect(created.address).toContain('Rua de Teste, 123')
-    expect(created.unit).toBe(created.address)
-    expect(router.currentRoute.value.params.id).toBe(String(created.id))
+    expect(createHousehold).toHaveBeenCalledWith(expect.objectContaining({
+      street: 'Rua de Teste', number: '123', block: 'A', birthDate: '1990-05-10', phone: '(11)99999-9999',
+    }), [])
+    expect(router.currentRoute.value.params.id).toBe('9')
   })
 
   it('abre e aprova um novo cadastro sem documento', async () => {
     const store = useResidentsStore(pinia)
-    const created = store.createResident({ name: 'Pessoa de Teste', birthDate: '1990-05-10', unit: 'Bloco A · Apto 12', monthlyFee: 0.5 })
-    await render(ResidentDetailView, `/app/moradores/${created.id}`)
+    store.residents = [{ id: 9, name: 'Pessoa de Teste', birthDate: '1990-05-10', unit: 'Rua, 1', monthlyFee: 0.5, document: null, status: 'pending' }]
+    await render(ResidentDetailView, '/app/moradores/9')
     expect(wrapper.text()).not.toContain('Baixar')
     await wrapper.findAll('button').find((button) => button.text().includes('Aprovar cadastro')).trigger('click')
-    expect(created.status).toBe('active')
+    await flushPromises()
+    expect(updateResident).toHaveBeenCalledWith(9, { situacao_cadastro: 'ativo' })
   })
 
   it('exige os campos obrigatórios do endereço antes de salvar', async () => {
@@ -83,7 +88,7 @@ describe('cadastro e detalhes', () => {
     await fillForm()
     await field('Número *').setValue('')
     await wrapper.find('form').trigger('submit')
-    expect(useResidentsStore(pinia).residents).toHaveLength(8)
+    expect(useResidentsStore(pinia).residents).toHaveLength(0)
     expect(field('Número *').classes()).toContain('invalid')
   })
 
@@ -123,7 +128,7 @@ describe('cadastro e detalhes', () => {
     await fillForm()
     await field(label).setValue(value)
     await wrapper.find('form').trigger('submit')
-    expect(useResidentsStore(pinia).residents).toHaveLength(8)
+    expect(useResidentsStore(pinia).residents).toHaveLength(0)
     expect(field(label).attributes('aria-invalid')).toBe('true')
     expect(wrapper.get(`#${field(label).attributes('aria-describedby')}`).text()).toContain(message)
   })
@@ -139,13 +144,13 @@ describe('cadastro e detalhes', () => {
     await inputs[1].setValue('ABC123DEF45')
     await inputs[2].setValue('31022000')
     await wrapper.find('form').trigger('submit')
-    expect(useResidentsStore(pinia).residents).toHaveLength(8)
+    expect(useResidentsStore(pinia).residents).toHaveLength(0)
     expect(associate.text()).toContain('data válida')
     await inputs[2].setValue('29022000')
-    await inputs[3].setValue('a@b')
+    await inputs[3].setValue('a@b.com')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
-    expect(useResidentsStore(pinia).residents.at(-1)).toMatchObject({ name: 'Associado #2', cpf: 'ABC.123.DEF-45', birthDate: '2000-02-29', email: 'a@b', monthlyFee: 1 })
+    expect(createHousehold).toHaveBeenCalledWith(expect.any(Object), [expect.objectContaining({ name: 'Associado #2', cpf: 'ABC.123.DEF-45', birthDate: '2000-02-29', email: 'a@b.com' })])
   })
 
   it('preenche e bloqueia apenas endereço, cidade e estado quando encontra o CEP', async () => {
@@ -159,7 +164,7 @@ describe('cadastro e detalhes', () => {
     expect(field('Cidade *').element.value).toBe('São Paulo')
     expect(field('Estado *').element.value).toBe('SP')
     for (const label of ['Endereço *', 'Cidade *', 'Estado *']) expect(field(label).element.disabled).toBe(true)
-    for (const label of ['Número *', 'Complemento']) expect(field(label).element.disabled).toBe(false)
+    for (const label of ['Número *', 'Bloco']) expect(field(label).element.disabled).toBe(false)
     await field('CEP *').setValue('01001-000')
     expect(field('Endereço *').element.disabled).toBe(false)
   })
@@ -197,6 +202,7 @@ describe('cadastro e detalhes', () => {
   })
 
   it('remove a seção de download de comprovantes dos cadastros existentes', async () => {
+    useResidentsStore(pinia).residents = [{ id: 1, name: 'Teste', birthDate: '1990-01-01', status: 'active', monthlyFee: 0.5 }]
     await render(ResidentDetailView, '/app/moradores/1')
     expect(wrapper.find('.document-row').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('Baixar')

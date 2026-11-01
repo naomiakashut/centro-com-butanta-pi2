@@ -1,0 +1,40 @@
+import process from 'node:process'
+import { test, expect } from '@playwright/test'
+
+// A execução com API real deve ser opt-in para não gravar em bancos existentes.
+// eslint-disable-next-line playwright/no-skipped-test
+test.skip(!process.env.CCB_LIVE_API, 'Requer uma API com banco isolado e credenciais de teste.')
+
+test('API real: login, cadastro, aprovação, pagamento, reload e desativação', async ({ page }) => {
+  await page.goto('/')
+  await page.getByLabel('E-mail', { exact: true }).fill(process.env.CCB_TEST_EMAIL || 'integracao@example.com')
+  await page.getByLabel('Senha', { exact: true }).fill(process.env.CCB_TEST_PASSWORD || 'teste-integracao-local')
+  await page.getByRole('button', { name: 'Entrar no painel' }).click()
+  await page.getByRole('link', { name: 'Novo cadastro', exact: true }).click()
+  await page.route('https://viacep.com.br/ws/*/json/', (route) => route.fulfill({ json: { logradouro: 'Rua Integração', localidade: 'São Paulo', uf: 'SP' } }))
+  await page.getByLabel('Nome completo *', { exact: true }).fill('Pessoa Integração')
+  await page.getByLabel('CPF *', { exact: true }).fill('52998224725')
+  await page.getByLabel('Data de nascimento *', { exact: true }).fill('10051990')
+  await page.getByLabel('Telefone *', { exact: true }).fill('11999999999')
+  await page.getByLabel('CEP *', { exact: true }).fill('05508000')
+  await page.getByRole('button', { name: 'Consultar CEP' }).click()
+  await expect(page.getByText('Endereço preenchido pelo CEP.', { exact: false })).toBeVisible()
+  await page.getByLabel('Número *', { exact: true }).fill('123')
+  await page.getByLabel('Bloco', { exact: true }).fill('B')
+  await page.getByRole('button', { name: 'Enviar para aprovação' }).click()
+  await expect(page.getByRole('heading', { name: 'Pessoa Integração', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Aprovar cadastro' }).click()
+  await expect(page.getByText('Ativado', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Registrar pagamento' }).click()
+  await page.getByLabel('Valor pago (R$)').fill('20')
+  await page.getByLabel('Nome do pagador').fill('Pessoa Integração')
+  await page.getByLabel('Data do pagamento', { exact: true }).fill('2026-10-31T10:00')
+  await page.getByRole('button', { name: 'Confirmar pagamento' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Pagamento registrado' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Pessoa Integração', exact: true })).toBeVisible()
+  await expect(page.getByText('31/10/2026', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Desativar cadastro' }).click()
+  await page.getByRole('button', { name: 'Desativar cadastro', exact: true }).last().click()
+  await expect(page.getByText('Desativado', { exact: true })).toBeVisible()
+})
