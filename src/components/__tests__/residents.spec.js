@@ -88,7 +88,7 @@ describe('integração de moradores', () => {
   })
   it('compõe entidades por ID, mascara CPF e mantém pendentes fora dos ativos', async () => {
     const people = [
-      { id_associado: 1, id_moradia: 8, nome: 'Ana', documento: '52998224725', situacao_cadastro: 'ativo', data_nascimento: '1990-01-01' },
+      { id_associado: 1, id_moradia: 8, nome: 'Ana', documento: '52998224725', situacao_cadastro: 'mensalidade_atrasada', data_nascimento: '1990-01-01' },
       { id_associado: 2, id_moradia: 8, nome: 'Bia', situacao_cadastro: 'pendente', data_nascimento: '1990-01-01' },
     ]
     fetchMock.mockImplementation(async (url) => respond(
@@ -104,15 +104,26 @@ describe('integração de moradores', () => {
     store.clear()
     expect(store.residents).toHaveLength(0)
   })
-  it('registra um pagamento real vinculado ao associado e recarrega o resumo', async () => {
+  it.each([
+    [{ atraso: true, data_pagamento: null }],
+    [{ atraso: false, data_pagamento: '2026-11-01' }],
+  ])('persiste a situação do morador pela API de mensalidade: %j', async (body) => {
     fetchMock.mockResolvedValue(respond([]))
     const store = useResidentsStore()
-    await store.registerPayment(7, { valor: 20, nome_pagador: 'Ana', modo_pagamento: 'pix', dth_pagamento: '2026-10-31T13:00:00Z', atraso: false, parcial: true })
+    await store.registerPayment(7, body)
     const [url, options] = fetchMock.mock.calls[0]
-    expect(url).toBe('/api/v1/pagamentos/')
-    expect(options.method).toBe('POST')
-    expect(JSON.parse(options.body)).toMatchObject({ id_associado: 7, valor: 20, parcial: true })
+    expect(url).toBe('/api/v1/associados/7/mensalidade')
+    expect(options.method).toBe('PUT')
+    expect(JSON.parse(options.body)).toEqual(body)
     expect(fetchMock).toHaveBeenCalledTimes(5)
+  })
+  it('um pagamento antigo em atraso não sobrescreve a situação atual do associado', async () => {
+    fetchMock.mockImplementation(async (url) => respond(url.includes('/associados/')
+      ? [{ id_associado: 1, id_moradia: 1, nome: 'Ana', situacao_cadastro: 'ativo', data_ultimo_pagamento: '2026-11-01' }]
+      : url.includes('/pagamentos/') ? [{ id_pagamento: 1, id_associado: 1, atraso: true, dth_pagamento: '2026-10-01T12:00:00' }] : []))
+    const store = useResidentsStore()
+    await store.load()
+    expect(store.getById(1)).toMatchObject({ status: 'active', lastPayment: '01/11/2026' })
   })
   it('não ativa o cadastro localmente se a aprovação falhar', async () => {
     fetchMock.mockResolvedValueOnce(respond({ detail: 'Falha ao aprovar' }, 500)).mockResolvedValue(respond([]))

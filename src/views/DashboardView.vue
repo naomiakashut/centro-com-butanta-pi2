@@ -35,7 +35,7 @@ function saveUfesp() {
 
     <section v-if="store.overdueCount" class="attention-banner">
       <div class="attention-banner__icon"><AppIcon name="alert" /></div>
-      <div><strong>{{ overdueUnits }} unidade precisa de atenção</strong><p>Indicador baseado no último pagamento registrado para a residência; a API não informa vencimentos.</p></div>
+      <div><strong>{{ overdueUnits }} unidade precisa de atenção</strong><p>Consulte os moradores com mensalidade marcada como atrasada.</p></div>
       <RouterLink to="/app/moradores?status=overdue">Ver moradores <AppIcon name="chevron" :size="16" /></RouterLink>
     </section>
 
@@ -66,7 +66,6 @@ function saveUfesp() {
           <form v-if="settingsOpen" class="ufesp-form" @submit.prevent="saveUfesp"><label for="ufesp">Valor atual em reais</label><div><input id="ufesp" v-model="ufespDraft" type="number" min="1" step="0.01" /><button class="button button--primary button--small">Salvar</button></div></form>
         </section>
         <section class="privacy-card"><AppIcon name="check" /><div><strong>Dados protegidos</strong><p>CPFs estão mascarados e o acesso é restrito à equipe autorizada.</p></div></section>
-        <p>UFESP usada apenas para estimativa nesta sessão. A API não armazena essa configuração.</p>
       </aside>
     </div>
   </div>

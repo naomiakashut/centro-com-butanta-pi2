@@ -43,7 +43,7 @@ Em produção, configure o servidor web para encaminhar `/api` ao back-end e ser
 - Leitura paginada de associados, moradias, comprovantes e pagamentos; lista, detalhes e indicadores usam dados reais.
 - Cadastro de uma moradia e seus associados, com tentativa de compensação em caso de falha.
 - Aprovação, reprovação de comprovantes existentes e desativação com data de saída.
-- Registro de pagamento com valor, nome do pagador, data, forma, indicação de atraso e de pagamento parcial.
+- Registro de pagamento ou atraso por morador: atraso desabilita a data; pagamento exige uma data em `dd/mm/aaaa`. A API persiste a situação e a data do último pagamento.
 - Erros de conexão/validação visíveis, carregamento e nova tentativa. Não há fallback para dados fictícios.
 
 Consulte [problemas e conflitos de integração](docs/integracao.md) antes de usar o painel operacionalmente. Alguns campos e regras do protótipo não têm suporte na API atual.
@@ -68,3 +68,6 @@ CCB_LIVE_API=1 CCB_TEST_EMAIL=integracao@example.com CCB_TEST_PASSWORD=sua-senha
 ```
 
 A consulta de CEP usa diretamente o ViaCEP via HTTPS, com preenchimento manual disponível quando a consulta falha. Os testes E2E simulam o ViaCEP para não depender da disponibilidade do serviço externo. A autenticação, o cadastro, as consultas, a aprovação, o pagamento e a desativação usam HTTP real.
+
+
+O registro simplificado usa `PUT /api/v1/associados/{id}/mensalidade`. Para bancos existentes, aplique a migração aditiva `migrations/20261101_mensalidade.sql` do back-end antes de usar esse fluxo. A situação persistida é `ativo` ou `mensalidade_atrasada`, apenas para o morador selecionado; a última data de pagamento é preservada ao marcar atraso.

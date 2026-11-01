@@ -9,7 +9,7 @@ import { useResidentsStore } from '@/stores/residents'
 import { createHousehold, loadResidents, updateResident } from '@/services/residents'
 import { lookupCep } from '@/services/cep'
 
-vi.mock('@/services/residents', () => ({ createHousehold: vi.fn(), loadResidents: vi.fn(), updateResident: vi.fn(), updateDocument: vi.fn() }))
+vi.mock('@/services/residents', () => ({ createHousehold: vi.fn(), loadResidents: vi.fn(), updateResident: vi.fn(), updateDocument: vi.fn(), registerPaymentStatus: vi.fn() }))
 
 vi.mock('@/services/cep', () => ({ lookupCep: vi.fn() }))
 

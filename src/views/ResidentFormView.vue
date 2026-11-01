@@ -145,7 +145,7 @@ async function submit() {
     <section class="panel form-section">
       <div class="form-section__body">
         <div class="form-section__heading"><h2>Mensalidade</h2><p>O cadastro será analisado pela equipe antes da ativação.</p></div>
-        <div class="fee-summary"><div><span>Mensalidade da unidade</span><strong>{{ monthlyFee }} UFESP</strong></div><div><span>Valor estimado atual</span><strong>R$ {{ monthlyValue.toFixed(2).replace('.', ',') }}</strong></div><small>Calculado com a UFESP configurada em R$ {{ store.ufespValue.toFixed(2).replace('.', ',') }}. Estimativa local, sem cobrança ou persistência de UFESP na API.</small></div>
+        <div class="fee-summary"><div><span>Mensalidade da unidade</span><strong>{{ monthlyFee }} UFESP</strong></div><div><span>Valor estimado atual</span><strong>R$ {{ monthlyValue.toFixed(2).replace('.', ',') }}</strong></div><small>Calculado com a UFESP configurada em R$ {{ store.ufespValue.toFixed(2).replace('.', ',') }}.</small></div>
       </div>
     </section>
 

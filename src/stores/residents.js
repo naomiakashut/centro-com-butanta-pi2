@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { createPayment, createHousehold, loadResidents, updateDocument, updateResident } from '@/services/residents'
+import { registerPaymentStatus, createHousehold, loadResidents, updateDocument, updateResident } from '@/services/residents'
 
 export const useResidentsStore = defineStore('residents', () => {
   const residents = ref([])
@@ -66,7 +66,7 @@ export const useResidentsStore = defineStore('residents', () => {
   }
 
   async function registerPayment(id, body) {
-    await createPayment(id, body)
+    await registerPaymentStatus(id, body)
     await load()
   }
 

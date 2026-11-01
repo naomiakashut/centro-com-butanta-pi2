@@ -44,6 +44,19 @@ export function standaloneApi() {
             return send(200, { access_token: token, token_type: 'bearer' })
           }
           if (req.headers.authorization !== `Bearer ${token}`) return send(401, { detail: 'Não autenticado' })
+          const monthlyMatch = /^\/api\/v1\/associados\/(\d+)\/mensalidade$/.exec(url.pathname)
+          if (monthlyMatch && req.method === 'PUT') {
+            const person = people.find((row) => row.id_associado === Number(monthlyMatch[1]))
+            if (!person) return send(404, { detail: 'Associado não encontrado' })
+            if (!['ativo', 'mensalidade_atrasada'].includes(person.situacao_cadastro)) return send(409, { detail: 'O cadastro precisa estar ativado.' })
+            const body = JSON.parse(raw)
+            if (typeof body.atraso !== 'boolean' || (!body.atraso && !/^\d{4}-\d{2}-\d{2}$/.test(body.data_pagamento || '')) || (body.atraso && body.data_pagamento)) {
+              return send(422, { detail: 'Informe a data do pagamento ou marque mensalidade atrasada.' })
+            }
+            person.situacao_cadastro = body.atraso ? 'mensalidade_atrasada' : 'ativo'
+            if (!body.atraso) person.data_ultimo_pagamento = body.data_pagamento
+            return send(200, person)
+          }
           const match = /^\/api\/v1\/(moradias|associados|comprovantes|pagamentos)(?:\/(\d+))?\/?$/.exec(url.pathname)
           if (!match) return send(404, { detail: 'Recurso de demonstração não encontrado' })
           const [, name, id] = match

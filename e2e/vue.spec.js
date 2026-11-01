@@ -10,6 +10,12 @@ test.beforeEach(async ({ page }) => {
       return route.fulfill({ json: body.get('password') === 'senha-teste' ? { access_token: 'teste-jwt' } : { detail: 'Email ou senha incorretos' }, status: body.get('password') === 'senha-teste' ? 200 : 401 })
     }
     if (request.headers().authorization !== 'Bearer teste-jwt') return route.fulfill({ status: 401, json: { detail: 'Não autenticado' } })
+    if (url.pathname.endsWith('/associados/1/mensalidade') && request.method() === 'PUT') {
+      const body = request.postDataJSON()
+      resident.situacao_cadastro = body.atraso ? 'mensalidade_atrasada' : 'ativo'
+      if (!body.atraso) resident.data_ultimo_pagamento = body.data_pagamento
+      return route.fulfill({ json: resident })
+    }
     if (url.pathname.endsWith('/associados/1') && request.method() === 'PUT') {
       Object.assign(resident, request.postDataJSON())
       return route.fulfill({ json: resident })
@@ -60,4 +66,30 @@ test('consulta o ViaCEP e preenche endereço, cidade e estado', async ({ page })
   await expect(page.locator('select[name="state"]')).toHaveValue('SP')
   await expect(page.getByLabel('Endereço *', { exact: true })).toBeDisabled()
   await expect(page.getByLabel('Bloco', { exact: true })).toHaveValue('')
+})
+
+
+test('registra atraso sem data e pagamento com data, persistindo após recarregar', async ({ page }) => {
+  await page.getByLabel('E-mail', { exact: true }).fill('admin@example.com')
+  await page.getByLabel('Senha', { exact: true }).fill('senha-teste')
+  await page.getByRole('button', { name: 'Entrar no painel' }).click()
+  await page.getByText('Pessoa Teste').click()
+  await page.getByRole('button', { name: 'Aprovar cadastro' }).click()
+  await page.getByRole('button', { name: 'Registrar pagamento ou atraso', exact: true }).click()
+  const form = page.getByRole('form', { name: 'Registrar pagamento ou atraso' })
+  await form.getByLabel('Mensalidade atrasada', { exact: true }).check()
+  await expect(form.getByLabel('Data do pagamento')).toBeDisabled()
+  await form.getByRole('button', { name: 'Registrar pagamento ou atraso' }).click()
+  await expect(page.locator('.detail-person__status').getByText('Mensalidade atrasada', { exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.locator('.detail-person__status').getByText('Mensalidade atrasada', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Registrar pagamento ou atraso', exact: true }).click()
+  await form.getByLabel('Mensalidade atrasada', { exact: true }).uncheck()
+  await expect(form.getByLabel('Data do pagamento')).toBeEnabled()
+  await form.getByLabel('Data do pagamento').fill('01112026')
+  await form.getByRole('button', { name: 'Registrar pagamento ou atraso' }).click()
+  await expect(page.locator('.detail-person__status').getByText('Ativado', { exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.locator('.detail-person__status').getByText('Ativado', { exact: true })).toBeVisible()
+  await expect(page.getByText('01/11/2026', { exact: true })).toBeVisible()
 })

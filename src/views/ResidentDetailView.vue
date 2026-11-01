@@ -1,9 +1,10 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useResidentsStore } from '@/stores/residents'
 import AppIcon from '@/components/AppIcon.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
+import PaymentStatusForm from '@/components/PaymentStatusForm.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,7 +21,6 @@ function flash(message) {
 }
 
 const paymentOpen = ref(false)
-const payment = reactive({ amount: '', payer: '', method: 'pix', date: '', late: false, partial: false })
 const busy = ref(false)
 const actionError = ref('')
 async function act(action, message) {
@@ -37,13 +37,9 @@ async function act(action, message) {
     busy.value = false
   }
 }
-function registerPayment() {
-  if (!(Number(payment.amount) > 0) || !payment.payer.trim() || !payment.date) return
-  return act(() => store.registerPayment(resident.value.id, {
-    valor: Number(payment.amount), nome_pagador: payment.payer.trim(), modo_pagamento: payment.method,
-    dth_pagamento: new Date(payment.date).toISOString(), atraso: payment.late, parcial: payment.partial,
-    recorrente: false, taxa: 0,
-  }), 'Pagamento registrado no histórico da residência.')
+function registerPayment(payload) {
+  return act(() => store.registerPayment(resident.value.id, payload),
+    payload.atraso ? 'Mensalidade marcada como atrasada.' : 'Pagamento registrado. Morador ativado.')
 }
 const approve = () => act(() => store.approveResident(resident.value.id), 'Cadastro aprovado. Morador ativado.')
 const reject = () => act(() => store.rejectDocument(resident.value.id), 'Comprovante reprovado.')
@@ -84,20 +80,11 @@ const deactivate = () => act(() => store.deactivateResident(resident.value.id), 
       <aside class="detail-aside">
         <section class="panel unit-card"><div class="unit-card__heading"><span><AppIcon name="home" /></span><div><small>UNIDADE RESIDENCIAL</small><strong>{{ resident.unit }}</strong></div></div><p>{{ resident.address }}</p><dl><div><dt>Estimativa mensal</dt><dd>{{ resident.monthlyFee }} UFESP</dd></div><div><dt>Valor estimado</dt><dd>R$ {{ (resident.monthlyFee * store.ufespValue).toFixed(2).replace('.', ',') }}</dd></div></dl></section>
         <section class="panel payment-card">
-          <div class="panel-heading"><div><h2>Histórico financeiro</h2><p>Último pagamento entre os associados da residência.</p></div></div>
-          <p>{{ resident.status === 'overdue' ? 'Último registro indica atraso.' : 'A API não permite confirmar se a unidade está em dia.' }}</p>
-          <dl><div><dt>Último pagamento</dt><dd>{{ resident.lastPayment }}</dd></div><div><dt>Próximo vencimento</dt><dd>{{ resident.dueDate }}</dd></div></dl>
-          <button v-if="['active', 'overdue'].includes(resident.status)" class="button button--primary button--block" type="button" @click="paymentOpen = !paymentOpen">Registrar pagamento</button>
-          <form v-if="paymentOpen" class="form-fields" @submit.prevent="registerPayment">
-            <label class="form-field"><span>Valor pago (R$)</span><input v-model="payment.amount" type="number" min="0.01" step="0.01" required /></label>
-            <label class="form-field"><span>Nome do pagador</span><input v-model="payment.payer" maxlength="200" required /></label>
-            <label class="form-field"><span>Data do pagamento</span><input v-model="payment.date" type="datetime-local" required /></label>
-            <label class="form-field"><span>Forma de pagamento</span><select v-model="payment.method"><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="transferencia">Transferência</option><option value="cartao">Cartão</option><option value="boleto">Boleto</option></select></label>
-            <label><input v-model="payment.late" type="checkbox" />Pagamento em atraso</label>
-            <label><input v-model="payment.partial" type="checkbox" />Pagamento parcial</label>
-            <p>O registro fica vinculado a este associado. O resumo da residência considera o pagamento mais recente, sem calcular quitação ou vencimento.</p>
-            <button class="button button--primary" :disabled="busy">Confirmar pagamento</button>
-          </form>
+          <div class="panel-heading"><div><h2>Mensalidade</h2><p>Situação do morador.</p></div></div>
+          <p>{{ resident.status === 'overdue' ? 'Mensalidade atrasada.' : resident.status === 'active' ? 'Morador ativado.' : 'Cadastro aguardando ativação.' }}</p>
+          <dl><div><dt>Último pagamento</dt><dd>{{ resident.lastPayment }}</dd></div></dl>
+          <button v-if="['active', 'overdue'].includes(resident.status)" class="button button--primary button--block" type="button" :aria-expanded="paymentOpen" @click="paymentOpen = !paymentOpen">Registrar pagamento ou atraso</button>
+          <PaymentStatusForm v-if="paymentOpen" :key="resident.id" :busy="busy" :overdue="resident.status === 'overdue'" @submit="registerPayment" />
         </section>
       </aside>
     </div>
