@@ -5,10 +5,10 @@ export function getToken() {
   return sessionStorage.getItem(TOKEN_KEY)
 }
 
-export function clearSession() {
+export function clearSession({ notify = true } = {}) {
   sessionStorage.removeItem(TOKEN_KEY)
   sessionStorage.removeItem('ccb-auth')
-  window.dispatchEvent(new Event('ccb-session-ended'))
+  if (notify) window.dispatchEvent(new Event('ccb-session-ended'))
 }
 
 export class ApiError extends Error {

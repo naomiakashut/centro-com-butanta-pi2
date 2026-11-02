@@ -93,3 +93,23 @@ test('registra atraso sem data e pagamento com data, persistindo após recarrega
   await expect(page.locator('.detail-person__status').getByText('Ativado', { exact: true })).toBeVisible()
   await expect(page.getByText('01/11/2026', { exact: true })).toBeVisible()
 })
+
+test('sair encerra a sessão sem excluir moradores e permite entrar novamente', async ({ page }) => {
+  const deletes = []
+  page.on('request', (request) => {
+    if (request.method() === 'DELETE') deletes.push(request.url())
+  })
+  await page.getByLabel('E-mail', { exact: true }).fill('admin@example.com')
+  await page.getByLabel('Senha', { exact: true }).fill('senha-teste')
+  await page.getByRole('button', { name: 'Entrar no painel' }).click()
+  await expect(page.getByText('Pessoa Teste', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Sair', exact: true }).click()
+  await expect(page).toHaveURL(/\/login$/)
+  await expect(page.getByRole('heading', { name: 'Boas-vindas' })).toBeVisible()
+  expect(await page.evaluate(() => sessionStorage.getItem('ccb-access-token'))).toBeNull()
+  await page.getByLabel('E-mail', { exact: true }).fill('admin@example.com')
+  await page.getByLabel('Senha', { exact: true }).fill('senha-teste')
+  await page.getByRole('button', { name: 'Entrar no painel' }).click()
+  await expect(page.getByText('Pessoa Teste', { exact: true })).toBeVisible()
+  expect(deletes).toEqual([])
+})
