@@ -20,7 +20,7 @@ test('API real: login, cadastro, aprovação, pagamento, reload e desativação'
   await page.getByRole('button', { name: 'Consultar CEP' }).click()
   await expect(page.getByText('Endereço preenchido pelo CEP.', { exact: false })).toBeVisible()
   await page.getByLabel('Número *', { exact: true }).fill('123')
-  await page.getByLabel('Bloco', { exact: true }).fill('B')
+  await page.getByLabel('Complemento', { exact: true }).fill('Apto 10')
   await page.getByRole('button', { name: 'Enviar para aprovação' }).click()
   await expect(page.getByRole('heading', { name: 'Pessoa Integração', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Aprovar cadastro' }).click()

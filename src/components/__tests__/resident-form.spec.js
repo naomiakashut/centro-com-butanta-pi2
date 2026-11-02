@@ -54,7 +54,7 @@ async function fillForm() {
     'Nome completo *': 'Pessoa de Teste', 'CPF *': '529.982.247-25',
     'Data de nascimento *': '10051990', 'Telefone *': '11999999999',
     'CEP *': '05508-000', 'Endereço *': 'Rua de Teste', 'Número *': '123',
-    'Bloco': 'A', 'Cidade *': 'São Paulo', 'Estado *': 'SP',
+    'Complemento': 'Apto 10', 'Cidade *': 'São Paulo', 'Estado *': 'SP',
   })) await field(label).setValue(value)
 }
 
@@ -68,7 +68,7 @@ describe('cadastro e detalhes', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
     expect(createHousehold).toHaveBeenCalledWith(expect.objectContaining({
-      street: 'Rua de Teste', number: '123', block: 'A', birthDate: '1990-05-10', phone: '(11)99999-9999',
+      street: 'Rua de Teste', number: '123', complement: 'Apto 10', birthDate: '1990-05-10', phone: '(11)99999-9999',
     }), [])
     expect(router.currentRoute.value.params.id).toBe('9')
   })
@@ -164,7 +164,7 @@ describe('cadastro e detalhes', () => {
     expect(field('Cidade *').element.value).toBe('São Paulo')
     expect(field('Estado *').element.value).toBe('SP')
     for (const label of ['Endereço *', 'Cidade *', 'Estado *']) expect(field(label).element.disabled).toBe(true)
-    for (const label of ['Número *', 'Bloco']) expect(field(label).element.disabled).toBe(false)
+    for (const label of ['Número *', 'Complemento']) expect(field(label).element.disabled).toBe(false)
     await field('CEP *').setValue('01001-000')
     expect(field('Endereço *').element.disabled).toBe(false)
   })

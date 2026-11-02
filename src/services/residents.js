@@ -13,7 +13,7 @@ export async function loadResidents() {
       .sort((a, b) => b.dth_pagamento.localeCompare(a.dth_pagamento) || b.id_pagamento - a.id_pagamento)[0]
     const doc = documents.filter((item) => item.id_associado === person.id_associado)
       .sort((a, b) => b.id_comprovante - a.id_comprovante)[0]
-    const address = home ? `${home.rua}, ${home.numero}${home.bloco ? ` · Bloco ${home.bloco}` : ''}` : 'Moradia não encontrada'
+    const address = home ? `${home.rua}, ${home.numero}${home.complemento ? ` · ${home.complemento}` : ''}` : 'Moradia não encontrada'
     const status = statusMap[person.situacao_cadastro] || 'unknown'
     const cpf = person.documento?.replace(/[^a-z0-9]/gi, '') || ''
     return {
@@ -34,7 +34,7 @@ export async function loadResidents() {
 // A API atual não oferece cadastro transacional. Compensa apenas os registros criados nesta operação.
 export async function createHousehold(primary, associates = []) {
   const home = await request('/moradias/', { method: 'POST', body: {
-    rua: primary.street.trim(), numero: primary.number.trim(), bloco: primary.block?.trim() || null,
+    rua: primary.street.trim(), numero: primary.number.trim(), complemento: primary.complement?.trim() || null,
     proprietario: primary.owner ? primary.name.trim() : primary.ownerName.trim(),
     numero_residentes: 1 + associates.length,
   } })

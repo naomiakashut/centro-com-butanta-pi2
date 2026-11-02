@@ -1,8 +1,8 @@
 // API de demonstração disponível somente no servidor Vite em modo standalone.
 export function standaloneApi() {
   const homes = [
-    { id_moradia: 1, rua: 'Rua da Comunidade', numero: '100', bloco: 'A', proprietario: 'Ana Demonstração', numero_residentes: 2 },
-    { id_moradia: 2, rua: 'Rua da Comunidade', numero: '200', bloco: 'B', proprietario: 'Bia Demonstração', numero_residentes: 1 },
+    { id_moradia: 1, rua: 'Rua da Comunidade', numero: '100', complemento: 'Bloco A', proprietario: 'Ana Demonstração', numero_residentes: 2 },
+    { id_moradia: 2, rua: 'Rua da Comunidade', numero: '200', complemento: 'Bloco B', proprietario: 'Bia Demonstração', numero_residentes: 1 },
   ]
   const people = [
     { id_associado: 1, id_moradia: 1, nome: 'Ana Demonstração', documento: '00000000000', data_nascimento: '1990-01-10', telefone: '(11)90000-0000', email: null, tipo_associacao: 'proprietario', situacao_cadastro: 'ativo', dth_ingresso: '2026-01-01T12:00:00' },

@@ -4,7 +4,7 @@ import { useResidentsStore } from '@/stores/residents'
 import { createHousehold, loadResidents } from '@/services/residents'
 import { clearSession, getToken, listAll, login, request } from '@/services/api'
 
-const primary = { name: 'Ana Teste', cpf: 'ABC.123.DEF-45', birthDate: '1990-01-01', email: '', phone: '(11)99999-9999', street: 'Rua A', number: '12', block: 'B', owner: true }
+const primary = { name: 'Ana Teste', cpf: 'ABC.123.DEF-45', birthDate: '1990-01-01', email: '', phone: '(11)99999-9999', street: 'Rua A', number: '12', complement: 'Apto 12', owner: true }
 let fetchMock
 function respond(data, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: async () => data }
@@ -67,7 +67,7 @@ describe('integração de moradores', () => {
     fetchMock.mockResolvedValueOnce(respond({ id_moradia: 8 })).mockResolvedValueOnce(respond({ id_associado: 10 })).mockResolvedValueOnce(respond({ id_associado: 11 }))
     expect(await createHousehold(primary, [{ ...primary, name: 'Outro' }])).toBe(10)
     const bodies = fetchMock.mock.calls.map(([, options]) => JSON.parse(options.body))
-    expect(bodies[0]).toEqual({ rua: 'Rua A', numero: '12', bloco: 'B', proprietario: 'Ana Teste', numero_residentes: 2 })
+    expect(bodies[0]).toEqual({ rua: 'Rua A', numero: '12', complemento: 'Apto 12', proprietario: 'Ana Teste', numero_residentes: 2 })
     expect(bodies[1]).toMatchObject({ id_moradia: 8, documento: 'ABC123DEF45', email: null, situacao_cadastro: 'pendente' })
     expect(bodies[2]).toMatchObject({ id_moradia: 8, tipo_associacao: 'associado' })
   })

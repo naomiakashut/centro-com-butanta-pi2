@@ -65,7 +65,7 @@ test('consulta o ViaCEP e preenche endereço, cidade e estado', async ({ page })
   await expect(page.getByLabel('Cidade *', { exact: true })).toHaveValue('São Paulo')
   await expect(page.locator('select[name="state"]')).toHaveValue('SP')
   await expect(page.getByLabel('Endereço *', { exact: true })).toBeDisabled()
-  await expect(page.getByLabel('Bloco', { exact: true })).toHaveValue('')
+  await expect(page.getByLabel('Complemento', { exact: true })).toHaveValue('')
 })
 
 

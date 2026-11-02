@@ -10,7 +10,7 @@ import { maskCpf, maskDate, maskPhone, maskCep, formatCity, dateToIso, personalE
 const store = useResidentsStore()
 const router = useRouter()
 const submitted = ref(false)
-const form = reactive({ name: '', socialName: '', cpf: '', birthDate: '', email: '', phone: '', cep: '', street: '', number: '', block: '', ownerName: '', city: '', state: '', owner: true, hasAssociates: false })
+const form = reactive({ name: '', socialName: '', cpf: '', birthDate: '', email: '', phone: '', cep: '', street: '', number: '', complement: '', ownerName: '', city: '', state: '', owner: true, hasAssociates: false })
 const cepLoading = ref(false)
 const cepMessage = ref('')
 const addressLocked = ref(false)
@@ -49,7 +49,7 @@ async function searchCep() {
     form.city = result.cidade
     form.state = result.estado
     addressLocked.value = true
-    cepMessage.value = 'Endereço preenchido pelo CEP. Informe o número e o bloco, se houver.'
+    cepMessage.value = 'Endereço preenchido pelo CEP. Informe o número e o complemento, se houver.'
   } catch (error) {
     if (!request.signal.aborted) cepMessage.value = error.message
   } finally {
@@ -75,7 +75,7 @@ async function submit() {
   if (saving.value) return
   submitted.value = true
   saveError.value = ''
-  if (cepLoading.value || Object.values(errors.value).some(Boolean) || !form.number.trim() || form.number.length > 20 || form.block.length > 50 || (!form.owner && (!form.ownerName.trim() || form.ownerName.length > 200)) || !states.includes(form.state)) return
+  if (cepLoading.value || Object.values(errors.value).some(Boolean) || !form.number.trim() || form.number.length > 20 || form.complement.length > 200 || (!form.owner && (!form.ownerName.trim() || form.ownerName.length > 200)) || !states.includes(form.state)) return
   if (associateErrors.value.some((error) => Object.values(error).some(Boolean))) return
   saving.value = true
   try {
@@ -118,7 +118,7 @@ async function submit() {
           <p v-if="cepMessage" class="cep-message form-field--wide" role="status">{{ cepMessage }}</p>
           <ValidatedField v-model="form.street" class="form-field--wide" label="Endereço *" name="street" autocomplete="address-line1" maxlength="150" :disabled="addressLocked" :error="errors.street" :submitted="submitted" required />
           <label class="form-field"><span>Número *</span><input v-model="form.number" maxlength="20" name="number" :class="{ invalid: submitted && !form.number.trim() }" /></label>
-          <label class="form-field"><span>Bloco</span><input v-model="form.block" name="block" maxlength="50" /></label>
+          <label class="form-field"><span>Complemento</span><input v-model="form.complement" name="complement" autocomplete="address-line2" maxlength="200" /></label>
           <ValidatedField v-model="form.city" label="Cidade *" name="city" autocomplete="address-level2" maxlength="50" :formatter="formatCity" :disabled="addressLocked" :error="errors.city" :submitted="submitted" required />
           <label class="form-field"><span>Estado *</span><select v-model="form.state" name="state" autocomplete="address-level1" :disabled="addressLocked" :class="{ invalid: submitted && !form.state }"><option value="">Selecione</option><option v-for="state in states" :key="state" :value="state">{{ state }}</option></select></label>
         </div>
