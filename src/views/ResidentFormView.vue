@@ -93,7 +93,7 @@ async function submit() {
 </script>
 
 <template>
-  <form class="form-page" novalidate @submit.prevent="submit">
+  <form class="form-page" aria-label="Cadastro de morador" novalidate @submit.prevent="submit">
     <div :inert="saving" class="form-fields">
     <section class="panel form-section">
       <div class="form-section__body">

@@ -60,7 +60,10 @@ CI=1 npm run test:e2e -- --project=chromium
 
 O E2E padrão usa respostas HTTP controladas. Instale o Chromium do Playwright caso ainda não esteja disponível (`npx playwright install chromium`).
 
-O E2E de API real é opcional e **grava dados**. Use somente uma API com banco descartável, rodando na porta 8000, e um administrador de teste já criado:
+O E2E de API real é opcional e **grava dados**. `CCB_LIVE_API=1` o habilita explicitamente; `0` ou a ausência da variável mantém o teste pulado. Use somente uma API com banco descartável, rodando na porta 8000, e um administrador de teste já criado:
+
+
+Substitua o e-mail e a senha abaixo pelas credenciais de um administrador já existente nesse banco. Os valores do comando são exemplos: o teste agora verifica a configuração antes de abrir o navegador e confirma a resposta do login antes de procurar o menu. Ele não cria o administrador automaticamente.
 
 ```sh
 npm run build
